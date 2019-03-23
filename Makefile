@@ -9,14 +9,16 @@ EMU_SIM = $(EMU_PATH)/bin/emusim.x
 EMU_SIM_ARGS = --short_trace
 EMU_PROFILE = $(EMU_PATH)/bin/emusim_profile
 
-EXE  = dot
+EXE  = llt
 EMU_EXE = $(EXE).mwx
+INPUT = tri-63.tsv
+#INPUT = tri-318.tsv
 
 $(EMU_EXE) : $(EMU_OBJS)
 	$(EMU_CXX) -o $(EMU_EXE) $(EMU_OBJS) $(LDFLAGS)
 
 run : $(EMU_EXE)
-	$(EMU_SIM) $(EMU_SIM_ARGS) $(EMU_EXE)
+	$(EMU_SIM) $(EMU_SIM_ARGS) $(EMU_EXE) $(INPUT)
 
 profile : $(EMU_EXE)
 	$(EMU_PROFILE) profile $(EMU_SIM_ARGS) -- $(EMU_EXE)

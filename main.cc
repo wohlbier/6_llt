@@ -23,66 +23,17 @@
   showing that no remote memory operations occurred.
  */
 #include <assert.h>
+#include <iostream>
 #include <tuple>
 #include <vector>
 
 #include <cilk.h>
 #include <memoryweb.h>
 
-typedef long Index_t;
-typedef long Scalar_t;
-typedef std::vector<std::tuple<Index_t,Scalar_t>> Row_t;
-typedef Row_t * pRow_t;
+#include "types.hh"
 
-static inline
-Index_t r_map(Index_t i) { return i / NODELETS(); } // slow running index
-static inline
-Index_t n_map(Index_t i) { return i % NODELETS(); } // fast running index
-
-Row_t ** allocSparseRows(Index_t nrows, Index_t nrows_per_nodelet)
+Scalar_t dot(pRow_t a, pRow_t b)
 {
-    // NB: r is a "view 2" pointer to a Row_t
-    //     r + 2 is an address on nodelet 2.
-    //     r[2] will migrate to node 2 and read the value at address r + 2
-
-    // MM: 124 memory references on nodelet 0.
-    // RM: 0+1 on all j nodelets (0,j) j=1...7
-    Row_t ** r
-        = (Row_t **)mw_malloc2d(NODELETS(),
-                                nrows_per_nodelet * sizeof(Row_t));
-
-    for (Index_t row_idx = 0; row_idx < nrows; ++row_idx)
-    {
-        size_t nid(n_map(row_idx));
-        size_t rid(r_map(row_idx));
-
-        // r_repl[nid][rid] is a Row_t
-        // r_repl[nid] + rid is address of Row_t's
-        // &r_repl[nid][rid] = r_repl[nid] + rid
-
-        // migrations to do placement new on other nodelets
-        pRow_t rowPtr = new(&r[nid][rid]) Row_t();
-    }
-
-    return r;
-}
-
-void addRow(Row_t ** r, Index_t row_idx, Row_t src)
-{
-    pRow_t rowPtr = r[n_map(row_idx)] + r_map(row_idx);
-
-    for (Row_t::iterator it = src.begin(); it < src.end(); ++it)
-    {
-        rowPtr->push_back(*it);
-    }
-}
-
-Scalar_t dot(Row_t ** r, Index_t a_row_idx, Index_t b_row_idx)
-{
-
-    pRow_t a = r[n_map(a_row_idx)] + r_map(a_row_idx);
-    pRow_t b = r[n_map(b_row_idx)] + r_map(b_row_idx);
-
     Row_t::iterator ait = a->begin();
     Row_t::iterator bit = b->begin();
 
@@ -116,55 +67,82 @@ int main(int argc, char* argv[])
 {
     starttiming();
 
-    Index_t nrows = 16;
-    Index_t nrows_per_nodelet = nrows + nrows % NODELETS();
+    FILE *infile = fopen(argv[1], "r");
+    if (!infile)
+    {
+        fprintf(stderr, "Unable to open file: %s\n", argv[1]);
+        exit(1);
+    }
 
-    Row_t ** r = cilk_spawn allocSparseRows(nrows, nrows_per_nodelet);
-    cilk_sync;
+    IndexArray_t iL, iU, iA;
+    IndexArray_t jL, jU, jA;
+    Index_t nedgesL = 0;
+    Index_t nedgesU = 0;
+    Index_t nedgesA = 0;
+    Index_t max_id = 0;
+    Index_t src, dst;
 
-    Row_t tmpRow1;
-    tmpRow1.push_back(std::make_tuple(0,1));
-    tmpRow1.push_back(std::make_tuple(3,1));
-    tmpRow1.push_back(std::make_tuple(5,1));
-    tmpRow1.push_back(std::make_tuple(7,1));
-    tmpRow1.push_back(std::make_tuple(12,1));
-    tmpRow1.push_back(std::make_tuple(14,1));
-    tmpRow1.push_back(std::make_tuple(27,1));
+    while (!feof(infile))
+    {
+        fscanf(infile, "%ld %ld\n", &src, &dst);
+        if (src > max_id) max_id = src;
+        if (dst > max_id) max_id = dst;
 
-    Index_t row_idx = 0;
-    cilk_migrate_hint(r + n_map(row_idx));
-    cilk_spawn addRow(r, row_idx, tmpRow1);
+        if (src < dst)
+        {
+            iA.push_back(src);
+            jA.push_back(dst);
 
-    Row_t tmpRow2;
-    tmpRow2.push_back(std::make_tuple(1,1));
-    tmpRow2.push_back(std::make_tuple(7,1));
-    tmpRow2.push_back(std::make_tuple(10,1));
-    tmpRow2.push_back(std::make_tuple(14,1));
-    tmpRow2.push_back(std::make_tuple(18,1));
-    tmpRow2.push_back(std::make_tuple(27,1));
+            iU.push_back(src);
+            jU.push_back(dst);
 
-    // migrate_hint doesn't help here since tmpRow is on nodelet 0.
-    row_idx = 15;
-    cilk_migrate_hint(r + n_map(row_idx));
-    cilk_spawn addRow(r, row_idx, tmpRow2);
-    cilk_sync;
+            ++nedgesU;
+        }
+        else if (dst < src)
+        {
+            iA.push_back(src);
+            jA.push_back(dst);
 
-    /*
-      MEMORY MAP
-      1470,2,0,0,0,0,0,14
-      0,0,2,0,0,0,0,0
-      0,0,0,2,0,0,0,0
-      0,0,0,0,2,0,0,0
-      0,0,0,0,0,2,0,0
-      0,0,0,0,0,0,2,0
-      0,0,0,0,0,0,0,2
-      17,0,0,0,0,0,0,444
-    */
+            iL.push_back(src);
+            jL.push_back(dst);
 
-    Scalar_t a = cilk_spawn dot(r, 0, 15);
-    cilk_sync;
+            ++nedgesL;
+        }
+        ++nedgesA;
+    }
+    fclose(infile);
 
-    assert(a == 3);
+    std::cout << "Read " << nedgesL << " edges in L." << std::endl;
+    Index_t nnodes = max_id + 1;
+    std::cout << "#Nodes = " << nnodes << std::endl;
+    std::vector<Index_t> v(iL.size(), 1); // matrix values of 1
+
+    Matrix_t L(nnodes);
+    L.build(iL.begin(), jL.begin(), v.begin(), nedgesL);
+
+    Matrix_t C(nnodes);
+    Row_t C_row;
+
+    // mxm
+    for (Index_t irow = 0; irow < L.nrows(); ++irow)
+    {
+        // address of Row_t to use in migration hints
+        pRow_t prow = L.row_addr(irow);
+        for (Index_t icol = 0; icol < L.nrows(); ++icol)
+        {
+            pRow_t pcol = L.row_addr(icol); // using L trans
+            cilk_migrate_hint(prow);
+            Scalar_t val = cilk_spawn dot(prow, pcol); // should return mask
+            if (val != 0)
+            {
+                C_row.push_back(std::make_tuple(icol, val));
+            }
+            //cilk_sync;
+        }
+        cilk_sync; // race?
+        C.setRow(irow, C_row);
+        C_row.clear();
+    }
 
     return 0;
 }
