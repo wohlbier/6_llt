@@ -1,3 +1,4 @@
+HDRS = types.hh
 SRCS = main.cc
 EMU_OBJS = $(subst .cc,.emu.o,$(SRCS))
 
@@ -21,9 +22,9 @@ run : $(EMU_EXE)
 	$(EMU_SIM) $(EMU_SIM_ARGS) $(EMU_EXE) $(INPUT)
 
 profile : $(EMU_EXE)
-	$(EMU_PROFILE) profile $(EMU_SIM_ARGS) -- $(EMU_EXE)
+	$(EMU_PROFILE) profile $(EMU_SIM_ARGS) -- $(EMU_EXE) $(INPUT)
 
-%.emu.o: %.cc
+%.emu.o: %.cc $(HDRS)
 	$(EMU_CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 .PHONY : clean
