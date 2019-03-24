@@ -41,6 +41,10 @@ public:
     }
 
     Index_t nrows() { return nrows_; }
+    Index_t nrows() const { return nrows_; }
+
+    Index_t nrows_per_nodelet() { return nrows_per_nodelet_; }
+    Index_t nrows_per_nodelet() const { return nrows_per_nodelet_; }
 
     void build(IndexArray_t::iterator i_it,
                IndexArray_t::iterator j_it,
@@ -66,6 +70,9 @@ public:
     }
 
     pRow_t row_addr(Index_t irow)
+    { return row_block_[n_map(irow)] + r_map(irow); }
+
+    pRow_t row_addr(Index_t irow) const
     { return row_block_[n_map(irow)] + r_map(irow); }
 
 private:

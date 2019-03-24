@@ -30,38 +30,9 @@
 #include <cilk.h>
 #include <memoryweb.h>
 
+#include "algebra.hh"
 #include "types.hh"
 
-Scalar_t dot(pRow_t a, pRow_t b)
-{
-    Row_t::iterator ait = a->begin();
-    Row_t::iterator bit = b->begin();
-
-    Scalar_t result = 0;
-
-    while (ait != a->end() && bit != b->end())
-    {
-        Index_t a_idx = std::get<0>(*ait);
-        Index_t b_idx = std::get<0>(*bit);
-
-        if (a_idx == b_idx)
-        {
-            result += std::get<1>(*ait) * std::get<1>(*bit);
-            ++ait;
-            ++bit;
-        }
-        else if (a_idx < b_idx)
-        {
-            ++ait;
-        }
-        else
-        {
-            ++bit;
-        }
-    }
-
-    return result;
-}
 
 int main(int argc, char* argv[])
 {
@@ -121,28 +92,8 @@ int main(int argc, char* argv[])
     L.build(iL.begin(), jL.begin(), v.begin(), nedgesL);
 
     Matrix_t C(nnodes);
-    Row_t C_row;
 
-    // mxm
-    for (Index_t irow = 0; irow < L.nrows(); ++irow)
-    {
-        // address of Row_t to use in migration hints
-        pRow_t prow = L.row_addr(irow);
-        for (Index_t icol = 0; icol < L.nrows(); ++icol)
-        {
-            pRow_t pcol = L.row_addr(icol); // using L trans
-            cilk_migrate_hint(prow);
-            Scalar_t val = cilk_spawn dot(prow, pcol); // should return mask
-            if (val != 0)
-            {
-                C_row.push_back(std::make_tuple(icol, val));
-            }
-            //cilk_sync;
-        }
-        cilk_sync; // race?
-        C.setRow(irow, C_row);
-        C_row.clear();
-    }
+    ABT_Mask_NoAccum_kernel(C, L, L, L);
 
     return 0;
 }
