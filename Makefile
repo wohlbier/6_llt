@@ -12,8 +12,8 @@ EMU_PROFILE = $(EMU_PATH)/bin/emusim_profile
 
 EXE  = llt
 EMU_EXE = $(EXE).mwx
-INPUT = tri-63.tsv
-#INPUT = tri-184.tsv
+#INPUT = tri-63.tsv
+INPUT = tri-184.tsv
 #INPUT = tri-379.tsv
 #INPUT = tri-994.tsv
 

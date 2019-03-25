@@ -8,9 +8,9 @@ typedef std::vector<std::tuple<Index_t,Scalar_t>> Row_t;
 typedef Row_t * pRow_t;
 
 static inline
-Index_t r_map(Index_t i) { return i / NODELETS(); } // slow running index
+Index_t r_map(Index_t i) { return i / NODELETS(); }
 static inline
-Index_t n_map(Index_t i) { return i % NODELETS(); } // fast running index
+Index_t n_map(Index_t i) { return i % NODELETS(); }
 
 class Matrix_t
 {
