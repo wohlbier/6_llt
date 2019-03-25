@@ -13,7 +13,9 @@ EMU_PROFILE = $(EMU_PATH)/bin/emusim_profile
 EXE  = llt
 EMU_EXE = $(EXE).mwx
 INPUT = tri-63.tsv
-#INPUT = tri-318.tsv
+#INPUT = tri-184.tsv
+#INPUT = tri-379.tsv
+#INPUT = tri-994.tsv
 
 $(EMU_EXE) : $(EMU_OBJS)
 	$(EMU_CXX) -o $(EMU_EXE) $(EMU_OBJS) $(LDFLAGS)
@@ -31,4 +33,4 @@ profile : $(EMU_EXE)
 
 clean :
 	-$(RM) *~ $(OBJS) $(EMU_OBJS) $(EXE) $(EMU_EXE) *.cdc *.hdd *.vsf
-	-$(RM) -r profile
+	-$(RM) -r profile $(EXE).txt
