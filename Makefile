@@ -10,15 +10,16 @@ EMU_SIM = $(EMU_PATH)/bin/emusim.x
 
 EMU_SIM_ARGS =
 #EMU_SIM_ARGS += --short_trace
-EMU_SIM_ARGS += --memory_trace
+#EMU_SIM_ARGS += --memory_trace
 
 EMU_PROFILE = $(EMU_PATH)/bin/emusim_profile
 
 EXE  = llt
 EMU_EXE = $(EXE).mwx
-INPUT = tri-1.tsv
+#INPUT = tri-1.tsv
+#INPUT = tri-3.tsv
 #INPUT = tri-63.tsv
-#INPUT = tri-184.tsv
+INPUT = tri-184.tsv
 #INPUT = tri-379.tsv
 #INPUT = tri-994.tsv
 

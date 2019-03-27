@@ -60,10 +60,9 @@ public:
     {
         for (Index_t ix = 0; ix < nedges; ++ix)
         {
-            //cilk_migrate_hint(row_addr(*i_it));
-            //cilk_spawn setElement(*i_it, *j_it, *v_it);
-            //cilk_sync;
-            setElement(*i_it, *j_it, *v_it);
+            cilk_migrate_hint(row_addr(*i_it));
+            cilk_spawn setElement(*i_it, *j_it, *v_it);
+            cilk_sync;
             ++i_it; ++j_it; ++v_it; // increment iterators
         }
         //cilk_sync; // races?
