@@ -18,10 +18,10 @@ EXE  = llt
 EMU_EXE = $(EXE).mwx
 #INPUT = tri-1.tsv
 #INPUT = tri-3.tsv
-INPUT = tri-63.tsv
+#INPUT = tri-63.tsv
 #INPUT = tri-184.tsv
 #INPUT = tri-379.tsv
-#INPUT = tri-994.tsv
+INPUT = tri-994.tsv
 
 $(EMU_EXE) : $(EMU_OBJS)
 	$(EMU_CXX) -o $(EMU_EXE) $(EMU_OBJS) $(LDFLAGS)
