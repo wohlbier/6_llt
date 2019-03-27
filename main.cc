@@ -36,15 +36,6 @@
 
 int main(int argc, char* argv[])
 {
-    starttiming();
-
-    FILE *infile = fopen(argv[1], "r");
-    if (!infile)
-    {
-        fprintf(stderr, "Unable to open file: %s\n", argv[1]);
-        exit(1);
-    }
-
     IndexArray_t iL, iU, iA;
     IndexArray_t jL, jU, jA;
     Index_t nedgesL = 0;
@@ -53,9 +44,17 @@ int main(int argc, char* argv[])
     Index_t max_id = 0;
     Index_t src, dst;
 
+    FILE *infile = fopen(argv[1], "r");
+    if (!infile)
+    {
+        fprintf(stderr, "Unable to open file: %s\n", argv[1]);
+        exit(1);
+    }
+
     while (!feof(infile))
     {
         fscanf(infile, "%ld %ld\n", &src, &dst);
+        //printf("%ld %ld\n", src, dst);
         if (src > max_id) max_id = src;
         if (dst > max_id) max_id = dst;
 
@@ -82,18 +81,24 @@ int main(int argc, char* argv[])
         ++nedgesA;
     }
     fclose(infile);
-
+    
     std::cout << "Read " << nedgesL << " edges in L." << std::endl;
     Index_t nnodes = max_id + 1;
     std::cout << "#Nodes = " << nnodes << std::endl;
-    std::vector<Index_t> v(iL.size(), 1); // matrix values of 1
+    IndexArray_t v(iL.size(), 1); // matrix values of 1
+
+    starttiming();
 
     Matrix_t L(nnodes);
     L.build(iL.begin(), jL.begin(), v.begin(), nedgesL);
+    //L.print();
 
     Matrix_t C(nnodes);
-
     ABT_Mask_NoAccum_kernel(C, L, L, L);
+
+    // reduce
+    Scalar_t nTri = reduce(C);
+    std::cerr << "nTri: " << nTri << std::endl;
 
     return 0;
 }
