@@ -31,10 +31,6 @@ public:
             size_t nid(n_map(irow));
             size_t rid(r_map(irow));
 
-            // row_block_[nid][rid] is a Row_t
-            // row_block_[nid] + rid is address of Row_t's
-            // &row_block_[nid][rid] = row_block_[nid] + rid
-
             // migrations to do placement new on other nodelets
             pRow_t rowPtr = new(row_block_[nid] + rid) Row_t();
             assert(rowPtr);

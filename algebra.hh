@@ -53,7 +53,6 @@ bool dot(Scalar_t & ans, pRow_t a, pRow_t b) // no semiring
     return result;
 }
 
-//void mask_dot_push(Scalar_t ** T_val, Index_t irow, Index_t icol,
 static inline
 void mask_dot_push(Index_t irow, Index_t icol,
                    pRow_t pMrow, pRow_t pCrow, pRow_t pArow, pRow_t pBcol)
@@ -70,7 +69,6 @@ void mask_dot_push(Index_t irow, Index_t icol,
     }
 }
 
-static inline
 void ABT_Mask_NoAccum_kernel(
     Matrix_t & C,               // output matrix
     Matrix_t const & M,         // mask matrix
@@ -99,7 +97,6 @@ void ABT_Mask_NoAccum_kernel(
     }
 }
 
-static inline
 Scalar_t reduce(Matrix_t & A)
 {
     Scalar_t sum = 0;
@@ -115,6 +112,5 @@ Scalar_t reduce(Matrix_t & A)
     }
     return sum;
 }
-
 
 #endif // ALGEBRA_HH
