@@ -21,7 +21,9 @@ EMU_EXE = $(EXE).mwx
 #INPUT = tri-63.tsv
 #INPUT = tri-184.tsv
 #INPUT = tri-379.tsv
-INPUT = tri-994.tsv
+#INPUT = tri-994.tsv
+INPUT = tri-1582.tsv
+#INPUT = triangle_count_data_ca-HepTh.tsv
 
 $(EMU_EXE) : $(EMU_OBJS)
 	$(EMU_CXX) -o $(EMU_EXE) $(EMU_OBJS) $(LDFLAGS)

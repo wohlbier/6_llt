@@ -60,8 +60,6 @@ void mask_dot_push(Index_t irow, Index_t icol,
     // return for empty row or column
     if (!pArow || !pBcol) return;
 
-    // [n_map(icol)][r_map(icol)] maps into T_val like irow
-
     Scalar_t ans;
     if (dot(ans, pArow, pBcol) && index_exists(pMrow,icol))
     {
