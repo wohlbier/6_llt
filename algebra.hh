@@ -3,6 +3,7 @@
 
 #include <memoryweb.h>
 #include "types.hh"
+#include "utils.hh"
 
 static inline
 bool index_exists(pRow_t a, Index_t i)
@@ -59,9 +60,11 @@ void mask_dot_push(Index_t irow, Index_t icol,
 {
     // return for empty row or column
     if (!pArow || !pBcol) return;
+    // mask
+    if (!index_exists(pMrow,icol)) return;
 
     Scalar_t ans;
-    if (dot(ans, pArow, pBcol) && index_exists(pMrow,icol))
+    if (dot(ans, pArow, pBcol))
     {
         pCrow->push_back(std::make_tuple(icol, ans));
     }
@@ -79,7 +82,9 @@ void ABT_Mask_NoAccum_kernel(
 
     for (Index_t icol = 0; icol < B.nrows(); ++icol)
     {
+        //std::cout << "icol: " << icol << " of " << B.nrows() << std::endl;
         pRow_t pBcol = B.row_addr(icol); // using icol of B^T is row addr
+        //print_emu_ptr("pBcol", pBcol);
         for (Index_t irow = 0; irow < A.nrows(); ++irow)
         {
             // address of Row_t to use in migration hints
@@ -87,9 +92,13 @@ void ABT_Mask_NoAccum_kernel(
             pRow_t pMrow = M.row_addr(irow);
             pRow_t pArow = A.row_addr(irow);
 
+            //print_emu_ptr("pCrow", pCrow);
+            //print_emu_ptr("pMrow", pMrow);
+            //print_emu_ptr("pArow", pArow);
             // want the thread to run on the nodelet of the row of C
             cilk_migrate_hint(pCrow);
             cilk_spawn mask_dot_push(irow, icol, pMrow, pCrow, pArow, pBcol);
+            //cilk_spawn ping_pong(pCrow, pBcol);
         }
         cilk_sync;
     }

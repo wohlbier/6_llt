@@ -12,6 +12,18 @@ Index_t n_map(Index_t i) { return i % NODELETS(); }
 static inline
 Index_t r_map(Index_t i) { return i / NODELETS(); }
 
+static inline
+Index_t ping_pong(volatile pRow_t p1, volatile pRow_t p2)
+{
+    Index_t sum = 0;
+    for (Index_t i = 0; i < 128; ++i)
+    {
+        sum += std::get<0>(*p2->begin());
+        sum += std::get<0>(*p1->begin());
+    }
+    return sum;
+}
+
 class Matrix_t
 {
 public:
@@ -56,7 +68,7 @@ public:
     {
         for (Index_t ix = 0; ix < nedges; ++ix)
         {
-            cilk_migrate_hint(row_addr(*i_it));
+            cilk_migrate_hint(row_nlet(*i_it));
             cilk_spawn setElement(*i_it, *j_it, *v_it);
             cilk_sync;
             ++i_it; ++j_it; ++v_it; // increment iterators
@@ -69,6 +81,12 @@ public:
 
     pRow_t row_addr(Index_t i) const
     { return row_block_[n_map(i)] + r_map(i); }
+
+    pRow_t * row_nlet(Index_t i)
+    { return row_block_ + n_map(i); }
+
+    pRow_t * row_nlet(Index_t i) const
+    { return row_block_ + n_map(i); }
 
     void print()
     {

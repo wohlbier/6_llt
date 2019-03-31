@@ -1,4 +1,4 @@
-HDRS = algebra.hh types.hh
+HDRS = algebra.hh types.hh utils.hh
 SRCS = main.cc
 EMU_OBJS = $(subst .cc,.emu.o,$(SRCS))
 
@@ -14,15 +14,17 @@ EMU_SIM_ARGS =
 
 EMU_PROFILE = $(EMU_PATH)/bin/emusim_profile
 
+LDFLAGS = -lemu_c_utils
+
 EXE  = llt
 EMU_EXE = $(EXE).mwx
 #INPUT = tri-1.tsv
 #INPUT = tri-3.tsv
-#INPUT = tri-63.tsv
+INPUT = tri-63.tsv
 #INPUT = tri-184.tsv
 #INPUT = tri-379.tsv
 #INPUT = tri-994.tsv
-INPUT = tri-1582.tsv
+#INPUT = tri-1582.tsv
 #INPUT = triangle_count_data_ca-HepTh.tsv
 
 $(EMU_EXE) : $(EMU_OBJS)
