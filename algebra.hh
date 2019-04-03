@@ -6,18 +6,18 @@
 #include "utils.hh"
 
 static inline
-bool index_exists(pRow_t a, Index_t i)
+bool index_exists(pRow_t r, Index_t icol)
 {
     bool result = false;
-    Row_t::iterator ait = a->begin();
-    while (ait != a->end())
+    Row_t::iterator rit = r->begin();
+    while (rit != r->end())
     {
-        if (i == std::get<0>(*ait))
+        if (icol == std::get<0>(*rit))
         {
             result = true;
             break;
         }
-        ++ait;
+        ++rit;
     }
     return result;
 }
@@ -56,60 +56,50 @@ bool dot(Scalar_t & ans, pRow_t a, pRow_t b) // no semiring
 
 static inline
 void mask_dot_push(Index_t irow, Index_t icol,
-                   pRow_t pMrow, pRow_t pCrow, pRow_t pArow, pRow_t pBcol)
+                   pMatrix_t M, pMatrix_t C, pMatrix_t A, pMatrix_t B)
 {
     // return for empty row or column
-    if (!pArow || !pBcol) return;
+    if (!A->getrow(irow) || !B->getrow(icol)) return;
     // mask
-    if (!index_exists(pMrow,icol)) return;
+    if (!index_exists(M->getrow(irow), icol)) return;
 
     Scalar_t ans;
-    if (dot(ans, pArow, pBcol))
+    if (dot(ans, A->getrow(irow), B->getrow(icol)))
     {
-        pCrow->push_back(std::make_tuple(icol, ans));
+        C->getrow(irow)->push_back(std::make_tuple(icol, ans));
     }
 }
 
+static inline
 void ABT_Mask_NoAccum_kernel(
-    Matrix_t & C,               // output matrix
-    Matrix_t const & M,         // mask matrix
+    pMatrix_t C,               // output matrix
+    pMatrix_t const M,         // mask matrix
     // SemiringT,               // semiring
-    Matrix_t const & A,         // Input matrix 1
-    Matrix_t const & B,         // Input matrix 2
+    pMatrix_t const A,         // Input matrix 1
+    pMatrix_t const B,         // Input matrix 2
     bool replace_flag = false)  // put the answer in place?
 {
     // making use of the fact we know that B equals L^T
 
-    for (Index_t icol = 0; icol < B.nrows(); ++icol)
+    for (Index_t icol = 0; icol < B->nrows(); ++icol)
     {
         //std::cout << "icol: " << icol << " of " << B.nrows() << std::endl;
-        pRow_t pBcol = B.row_addr(icol); // using icol of B^T is row addr
-        //print_emu_ptr("pBcol", pBcol);
-        for (Index_t irow = 0; irow < A.nrows(); ++irow)
+        for (Index_t irow = 0; irow < A->nrows(); ++irow)
         {
-            // address of Row_t to use in migration hints
-            pRow_t pCrow = C.row_addr(irow);
-            pRow_t pMrow = M.row_addr(irow);
-            pRow_t pArow = A.row_addr(irow);
-
-            //print_emu_ptr("pCrow", pCrow);
-            //print_emu_ptr("pMrow", pMrow);
-            //print_emu_ptr("pArow", pArow);
             // want the thread to run on the nodelet of the row of C
-            cilk_migrate_hint(pCrow);
-            cilk_spawn mask_dot_push(irow, icol, pMrow, pCrow, pArow, pBcol);
-            //cilk_spawn ping_pong(pCrow, pBcol);
+            cilk_migrate_hint(C->row_addr(irow));
+            cilk_spawn mask_dot_push(irow, icol, M, C, A, B);
         }
         cilk_sync;
     }
 }
 
-Scalar_t reduce(Matrix_t & A)
+Scalar_t reduce(pMatrix_t A)
 {
     Scalar_t sum = 0;
-    for (Index_t irow = 0; irow < A.nrows(); ++irow)
+    for (Index_t irow = 0; irow < A->nrows(); ++irow)
     {
-        pRow_t pArow = A.row_addr(irow);
+        pRow_t pArow = A->getrow(irow);
         Row_t::iterator ait = pArow->begin();
         while (ait != pArow->end())
         {

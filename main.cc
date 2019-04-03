@@ -81,7 +81,7 @@ int main(int argc, char* argv[])
         ++nedgesA;
     }
     fclose(infile);
-    
+
     std::cout << "Read " << nedgesL << " edges in L." << std::endl;
     Index_t nnodes = max_id + 1;
     std::cout << "#Nodes = " << nnodes << std::endl;
@@ -89,11 +89,11 @@ int main(int argc, char* argv[])
 
     starttiming();
 
-    Matrix_t L(nnodes);
-    L.build(iL.begin(), jL.begin(), v.begin(), nedgesL);
-    //L.print();
+    Matrix_t * L = Matrix_t::create(nnodes);
+    L->build(iL.begin(), jL.begin(), v.begin(), nedgesL);
+    //L->print();
 
-    Matrix_t C(nnodes);
+    Matrix_t * C = Matrix_t::create(nnodes);
     ABT_Mask_NoAccum_kernel(C, L, L, L);
 
     // reduce
