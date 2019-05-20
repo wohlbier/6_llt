@@ -54,7 +54,6 @@ int main(int argc, char* argv[])
     while (!feof(infile))
     {
         fscanf(infile, "%ld %ld\n", &src, &dst);
-        //printf("%ld %ld\n", src, dst);
         if (src > max_id) max_id = src;
         if (dst > max_id) max_id = dst;
 
@@ -91,7 +90,6 @@ int main(int argc, char* argv[])
 
     Matrix_t * L = Matrix_t::create(nnodes);
     L->build(iL.begin(), jL.begin(), v.begin(), nedgesL);
-    //L->print();
 
     Matrix_t * C = Matrix_t::create(nnodes);
     ABT_Mask_NoAccum_kernel(C, L, L, L);
