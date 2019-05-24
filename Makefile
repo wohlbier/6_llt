@@ -19,10 +19,10 @@ LDFLAGS = -lemu_c_utils
 EXE  = llt
 EMU_EXE = $(EXE).mwx
 #INPUT = tri-1.tsv
-#INPUT = tri-3.tsv
+INPUT = tri-3.tsv
 #INPUT = tri-63.tsv
 #INPUT = tri-184.tsv
-INPUT = tri-379.tsv
+#INPUT = tri-379.tsv
 #INPUT = tri-994.tsv
 #INPUT = tri-1582.tsv
 #INPUT = triangle_count_data_ca-HepTh.tsv
@@ -34,6 +34,7 @@ run : $(EMU_EXE)
 	$(EMU_SIM) $(EMU_SIM_ARGS) $(EMU_EXE) $(INPUT)
 
 profile : $(EMU_EXE)
+	CORE_CLK_MHZ=175 \
 	$(EMU_PROFILE) profile $(EMU_SIM_ARGS) -- $(EMU_EXE) $(INPUT)
 
 %.emu.o: %.cc $(HDRS)
