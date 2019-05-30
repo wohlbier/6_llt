@@ -22,17 +22,22 @@
   counted as a local memory operation. In this example, all the values are zero
   showing that no remote memory operations occurred.
  */
-#include <assert.h>
 #include <iostream>
+#include <assert.h>
 #include <tuple>
 #include <vector>
 
 #include <cilk.h>
 #include <memoryweb.h>
+#include <distributed.h>
 
 #include "algebra.hh"
 #include "types.hh"
 
+extern "C" {
+#include <emu_c_utils/layout.h>
+#include <emu_c_utils/hooks.h>
+}
 
 int main(int argc, char* argv[])
 {
@@ -86,7 +91,7 @@ int main(int argc, char* argv[])
     std::cout << "#Nodes = " << nnodes << std::endl;
     IndexArray_t v(iL.size(), 1); // matrix values of 1
 
-    starttiming();
+    hooks_region_begin("GBTL_Matrix_Build");
 
     Matrix_t * L = Matrix_t::create(nnodes);
     L->build(iL.begin(), jL.begin(), v.begin(), nedgesL);
@@ -97,6 +102,7 @@ int main(int argc, char* argv[])
     // reduce
     Scalar_t nTri = reduce(C);
     std::cerr << "nTri: " << nTri << std::endl;
-
+    
+    hooks_region_end();
     return 0;
 }
