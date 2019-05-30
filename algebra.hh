@@ -87,7 +87,7 @@ void ABT_Mask_NoAccum_kernel(
         for (Index_t irow = 0; irow < A->nrows(); ++irow)
         {
             // want the thread to run on the nodelet of the row of C
-            cilk_migrate_hint(C->nodelet_addr(irow));
+            cilk_migrate_hint(C->row_addr(irow));
             cilk_spawn mask_dot_push(irow, icol, M, C, A, B);
         }
         cilk_sync;

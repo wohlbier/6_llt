@@ -56,7 +56,7 @@ public:
     {
         for (Index_t ix = 0; ix < nedges; ++ix)
         {
-            cilk_migrate_hint(nodelet_addr(*i_it));
+            cilk_migrate_hint(row_addr(*i_it));
             cilk_spawn setElement(*i_it, *j_it, *v_it);
             cilk_sync;
             ++i_it; ++j_it; ++v_it; // increment iterators
@@ -69,7 +69,7 @@ public:
     pRow_t getrow(Index_t i) { return rows_[n_map(i)] + r_map(i); }
     pRow_t getrow(Index_t i) const { return rows_[n_map(i)] + r_map(i); }
 
-    Index_t * nodelet_addr(Index_t i)
+    Index_t * row_addr(Index_t i)
     {
         // dereferencing causes migrations
         return (Index_t *)(rows_ + n_map(i));
